@@ -1,0 +1,73 @@
+#! /bin/busybox sh 
+#
+# $Id: initramfs_init 722 2014-11-14 19:11:49Z msmith626@gmail.com $
+# 
+# Modified by ilkermanap@gmail.com to create a network bootable image
+#
+
+rescue_shell() {
+	echo "Something bad happened; attempting to drop into a shell..."
+	/bin/busybox --install -s
+	exec setsid sh -c 'exec sh </dev/tty1 >/dev/tty1 2>&1'
+}
+
+# Install BusyBox
+/bin/busybox --install -s
+
+# Hide kernel console messages
+dmesg -n 1
+
+# Some devices are delayed
+echo "Waiting for devices to settle..."
+sleep 5
+
+# A few requirements
+mount -t proc none /proc || rescue_shell
+mount -t sysfs none /sys || rescue_shell
+mdev -s || rescue_shell
+
+# Make sure we have enough physical memory
+if [ `cat /proc/meminfo | grep MemTotal | awk '{print $2}'` -lt 3500000 ]; then
+	echo "ESOS requires at least 3.5 GB of usable RAM!"
+	rescue_shell
+fi
+
+# Mount up
+# tmp dir size is important. if the image file is bigger than 
+# 250MB, this should break.
+# FIXME: after creating the root file system image, check if it 
+# is bigger than 250 MB.
+mount -t tmpfs -o size=1536m tmpfs /mnt/root || rescue_shell
+mount -t tmpfs -o size=250m tmpfs /mnt/tmp || rescue_shell
+
+# Download root file system
+echo "Downloading root file system..."
+cd /mnt/tmp
+# sample
+# tftp -g -r /esos/esos-rootimg-r645.img  192.168.1.20
+# directory is with respect to tftp directory.
+
+tftp -g -r xTFTP_ROOTIMAGE_DIR/xROOTIMAGE_FILE  xTFTPSERVER_IP_ADDR
+
+# Setup the root file system
+echo "Initializing root file system..."
+cd /mnt/root 
+echo "Unzipping and extracting.."
+gzip -d -c /mnt/tmp/xROOTIMAGE_FILE | cpio -imd
+
+cd /
+mkdir /mnt/root/dev
+mkdir /mnt/root/proc
+mkdir /mnt/root/sys
+
+cp -a /dev/* /mnt/root/dev/
+ln -s busybox /mnt/root/bin/sh
+chroot /mnt/root /bin/sh -c "/bin/busybox --install -s"
+
+# All done
+umount /mnt/tmp
+umount /proc
+umount /sys
+
+# Boot the real thing
+exec switch_root /mnt/root /sbin/init
