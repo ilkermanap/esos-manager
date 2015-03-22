@@ -1,12 +1,11 @@
-= Esos Manager =
-
-== Esos ==
+# Esos Manager 
+##Esos
 
 Detailed information about esos is at [https://code.google.com/p/enterprise-storage-os/](https://code.google.com/p/enterprise-storage-os)
 
 Briefly, it is an open source, high performance, block-level storage platform.
 
-== This project ==
+## This project
 
 The aim of this project is to provide the tools to create the pxe bootable
 images from esos images. All development will be on github. Feel free to post issues.
@@ -27,7 +26,7 @@ The second phase will include a manager application, which uses the synced
 configurations to change the configurations and apply it to several esos 
 appliances.
 
-== Changes ==
+## Changes in esos image
 
 * The init script inside initramfs is adapted to download the root image from 
 tftp. 
