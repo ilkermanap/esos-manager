@@ -72,6 +72,31 @@ class Fdisk:
         os.system(cmd)
         os.system("umount %s" % partname)
 
+class Cpio:
+    def __init__(self, tempdir):
+        self.temp = tempdir
+        os.system("mkdir -p %s"  % self.temp)
+
+    def create(self, directory, parameters):
+        pass
+
+    def addFile(self, newfile, location):
+        pass
+
+    def open(self, cpiofile):
+        c = ""
+        ext = cpiofile.split(".")[-1]
+        if ext == "xz":
+            c = "xzcat "
+        if ext == "gz":
+            c = "gzcat "
+        if ext == "cpio":
+            c = ""
+        if ext == "bz2":
+            c = "bzcat "
+        cmd = "cd %s; %s  ../%s | cpio -idv   " % (self.temp, c, cpiofile )
+        os.system(cmd)
+
 class Esos:
     def __init__(self, rev, url, cache, workdir):
         self.url = url
@@ -101,7 +126,7 @@ class Esos:
                                % (self.workdir, self.rev, self.rev))
         self.image.extractDir("root")
         self.image.extractDir("boot")
-
+        
 
     def unzip(self):
         cmd = "mkdir -p %s"
