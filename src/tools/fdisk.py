@@ -45,10 +45,12 @@ class Fdisk:
         ans = os.popen(cmd,"r").readlines()
         for line in ans[2:]:
             l = line.strip()
+            print l
             p = l.split()
             if l.find("Units") > -1:
                 self.sector = int(p[-2])
             if l.find(self.name) > -1:
+                print l
                 self.partitions.append(Partition(l, self.sector))
 
     def mount(self, partname):
@@ -71,6 +73,7 @@ class Fdisk:
         """
         self.mount(partname)
         print("Copying from %s's %s partition to %s" % (self.name, partname, self.fname))
+        os.system("pwd")
         cmd = "mkdir -p %s; cp -ar %s %s/. " % (self.fname, partname, self.fname)
         os.system(cmd)
         os.system("umount %s" % partname)

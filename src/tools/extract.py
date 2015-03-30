@@ -1,5 +1,6 @@
 import os, sys
 from fdisk import Fdisk
+
 URL = "http://download.esos-project.com/packages/trunk/"
 REVCACHE = "esos-zip"
 WORKDIR = "workspace"
@@ -32,7 +33,7 @@ class Cpio:
         os.system(cmd)
 
 class Esos:
-    def __init__(self, rev, url, cache, workdir):
+    def __init__(self, rev, url = URL, cache = REVCACHE, workdir = WORKDIR):
         self.url = url
         self.rev = rev
         self.cache = cache
@@ -52,11 +53,19 @@ class Esos:
 
     def setupWorkdir(self):
         if not(os.path.exists(self.workdir)):
-            print "xx"
             os.system("mkdir -p %s" % self.workdir)
-            cmd = "cd %s; unzip ../../%s/esos-trunk_r%d.zip" \
-                  % (self.workdir, self.cache, self.rev)
-            os.system(cmd)
+        cmd = "cd %s; unzip ../../%s/esos-trunk_r%d.zip" \
+              % (self.workdir, self.cache, self.rev)
+        os.system(cmd)
+        imgfile =  "%s/esos-trunk_r%d/esos-trunk_r%d.img" \
+                   % (self.workdir, self.rev, self.rev)
+        if not(os.path.exists(imgfile)):
+            if (os.path.exists("%s.bz2" % imgfile)):
+                cmd = "bzip2 -d %s.bz2" % imgfile
+                os.system(cmd)
+            if (os.path.exists("%s.xz" % imgfile)):
+                cmd = "xz -d %s.xz" % imgfile
+                os.system(cmd)
         self.image = EsosImage("%s/esos-trunk_r%d/esos-trunk_r%d.img" \
                                % (self.workdir, self.rev, self.rev))
         self.image.extractDir("root")
@@ -69,8 +78,6 @@ class Esos:
         cmd = "wget  %s/esos-trunk_r%d.zip -O  %s/esos-trunk_r%d.zip" \
               % (self.url, self.rev, self.cache,self.rev)
         return os.system(cmd)
-
-
 
 class EsosImage(Fdisk):
     def __init__(self, imageName):
@@ -85,5 +92,5 @@ class EsosImage(Fdisk):
         self.parts["logs"] = self.partitions[3]
 
 if __name__ == "__main__":
-    x = Esos(766, URL, REVCACHE, WORKDIR)
+    x = Esos(766)
     x.setupWorkdir()
