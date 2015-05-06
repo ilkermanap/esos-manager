@@ -5,7 +5,6 @@ URL = "http://download.esos-project.com/packages/trunk/"
 REVCACHE = "esos-zip"
 WORKDIR = "workspace"
 
-os.system("mkdir -p %s %s " % (REVCACHE, WORKDIR))
 
 class Cpio:
     def __init__(self, tempdir):
@@ -33,51 +32,25 @@ class Cpio:
         os.system(cmd)
 
 class Esos:
-    def __init__(self, rev, url = URL, cache = REVCACHE, workdir = WORKDIR):
-        self.url = url
-        self.rev = rev
-        self.cache = cache
-        self.image = None
-        self.workdir = "%s/%d" % (workdir, rev)
-        if not(os.path.exists(self.workdir)):
-            os.system("mkdir -p %s" % self.workdir)
-        if not(os.path.exists("%s/esos-trunk_r%d.zip" % (cache, rev))):
-            status = self.retrieve()
-            if status != 0:
-                print "Problem with image download"
-                print "%s/esos-trunk_r%d.zip" % (url, rev)
-                sys.exit()
+    def __init__(self, imgfile):
+        if imgfile.find("/") > -1:
+            self.imageFile = imgfile.split("/")[-1]
         else:
-            print("%s/esos-trunk_r%d.zip exists" % (cache, rev))
+            self.imageFile = imgfile        
+        self.rev = self.imageFile[:self.imageFile.rfind(".")]
 
-
-    def setupWorkdir(self):
-        if not(os.path.exists(self.workdir)):
-            os.system("mkdir -p %s" % self.workdir)
-        cmd = "cd %s; unzip ../../%s/esos-trunk_r%d.zip" \
-              % (self.workdir, self.cache, self.rev)
-        os.system(cmd)
-        imgfile =  "%s/esos-trunk_r%d/esos-trunk_r%d.img" \
-                   % (self.workdir, self.rev, self.rev)
-        if not(os.path.exists(imgfile)):
-            if (os.path.exists("%s.bz2" % imgfile)):
-                cmd = "bzip2 -d %s.bz2" % imgfile
-                os.system(cmd)
-            if (os.path.exists("%s.xz" % imgfile)):
-                cmd = "xz -d %s.xz" % imgfile
-                os.system(cmd)
-        self.image = EsosImage("%s/esos-trunk_r%d/esos-trunk_r%d.img" \
-                               % (self.workdir, self.rev, self.rev))
+        print "Creating work dir ", self.rev
+        os.system("mkdir -p %s/boot" % self.rev)
+        os.system("mkdir -p %s/root" % self.rev)
+        print "Copying image file into work dir ", self.imageFile
+        os.system("cp %s %s/." % (imgfile, self.rev))
+        os.chdir(self.rev)
+        self.image = EsosImage("%s" % (self.imageFile))
+        print "Extracting root"       
         self.image.extractDir("root")
+        print "Extracting boot"
         self.image.extractDir("boot")
-
-    def unzip(self):
-        cmd = "mkdir -p %s"
-
-    def retrieve(self):
-        cmd = "wget  %s/esos-trunk_r%d.zip -O  %s/esos-trunk_r%d.zip" \
-              % (self.url, self.rev, self.cache,self.rev)
-        return os.system(cmd)
+        
 
 class EsosImage(Fdisk):
     def __init__(self, imageName):
@@ -92,5 +65,5 @@ class EsosImage(Fdisk):
         self.parts["logs"] = self.partitions[3]
 
 if __name__ == "__main__":
-    x = Esos(766)
-    x.setupWorkdir()
+    x = Esos(sys.argv[1])
+

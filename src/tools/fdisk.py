@@ -45,13 +45,11 @@ class Fdisk:
         ans = os.popen(cmd,"r").readlines()
         for line in ans[2:]:
             l = line.strip()
-            print l
             p = l.split()
             if l.find("Units") > -1:
                 self.sector = int(p[-2])
             if l.find(self.name) > -1:
-                print l
-                self.partitions.append(Partition(l, self.sector))
+                self.partitions.append(Partition(l, self.sector)
 
     def mount(self, partname):
         """
@@ -62,9 +60,8 @@ class Fdisk:
         print("Mounting %s from %s" % (partname, self.name))
         start = self.parts[partname].start
         offset = self.sector * start
-        mountcmd = "mkdir -p %s; mount -o loop,offset=%d %s  %s" % (partname, offset, self.name, partname)
-        print mountcmd
-        os.system(mountcmd)
+        mountcmd = "mkdir -p %sX; mount -o loop,offset=%d %s  %sX" % (partname, offset, self.name, partname)
+        os.system(mountcmd)    
 
     def extractDir(self, partname):
         """
@@ -72,11 +69,11 @@ class Fdisk:
         partition name
         """
         self.mount(partname)
-        print("Copying from %s's %s partition to %s" % (self.name, partname, self.fname))
-        os.system("pwd")
-        cmd = "mkdir -p %s; cp -ar %s %s/. " % (self.fname, partname, self.fname)
+        print("Copying from %s's %s partition to %s" % (self.name, partname, partname))
+        cmd = "mkdir -p %s; cp -ar %sX/* %s/. " % (partname, partname, partname)
         os.system(cmd)
-        os.system("umount %s" % partname)
+        os.system("umount %sX" % partname)
+        os.system("rmdir %sX" % partname)
 
     def extractTar(self, partname):
         """
@@ -86,10 +83,11 @@ class Fdisk:
         usage: x.extractTar("boot")
         """
         self.mount(partname)
-        cmd = "tar -Jcf  %s-%s.tar.xz %s " % (self.fname, partname, partname)
+        cmd = "tar -Jcf  %s-%s.tar.xz %sX " % (self.fname, partname, partname)
         print("Creating tar of %s partition" % partname)
         os.system(cmd)
-        os.system("umount %s" % partname)
+        os.system("umount %sX" % partname)
+        os.system("rmdir %sX" % partname)
 
     def extractCpio(self, partname):
         """
