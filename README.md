@@ -1,7 +1,7 @@
 # Esos Manager 
 ##Esos
 
-Detailed information about esos is at [https://code.google.com/p/enterprise-storage-os/](https://code.google.com/p/enterprise-storage-os)
+Detailed information about esos is at [http://www.esos-project.com/](http://www.esos-project.com/)
 
 Briefly, it is an open source, high performance, block-level storage platform.
 
