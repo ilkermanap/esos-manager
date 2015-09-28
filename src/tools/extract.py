@@ -11,24 +11,35 @@ class Cpio:
         self.temp = tempdir
         os.system("mkdir -p %s"  % self.temp)
 
-    def create(self, directory, parameters):
+    def create(self, fname, gzip=True):
+        if gzip == True:
+            cmd = "cd %s; find . -depth  -print | cpio -ov | gzip -9  > ../%s.gz"  % (self.temp, fname)
+        else:
+            cmd = "cd %s; find . -depth  -print | cpio -ov  > ../%s"  % (self.temp, fname)
+        print cmd
+        os.system(cmd)
         pass
 
-    def addFile(self, newfile, location):
-        pass
+    def add_file(self, newfile, location):
+        cmd = "rm -f %s%s 2>/dev/null; cp %s %s%s" % (self.temp, location, newfile, self.temp, location)
+        os.system(cmd)
 
+    
     def open(self, cpiofile):
+        cpcmd = "cp %s %s/." % (cpiofile, self.temp)
+        os.system(cpcmd)
+        fname = cpiofile[cpiofile.rfind("/")+1:]
         c = ""
         ext = cpiofile.split(".")[-1]
         if ext == "xz":
             c = "xzcat "
         if ext == "gz":
-            c = "gzcat "
+            c = "zcat "
         if ext == "cpio":
             c = ""
         if ext == "bz2":
             c = "bzcat "
-        cmd = "cd %s; %s  ../%s | cpio -idv   " % (self.temp, c, cpiofile )
+        cmd = "cd %s; %s  %s | cpio -idv ; rm -f  %s  " % (self.temp, c, fname , fname)
         os.system(cmd)
 
 class Esos:
@@ -51,6 +62,8 @@ class Esos:
         print "Extracting boot"
         self.image.extractDir("boot")
         
+    def addInit(self, initfile):
+        pass
 
 class EsosImage(Fdisk):
     def __init__(self, imageName):

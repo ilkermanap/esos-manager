@@ -49,7 +49,7 @@ class Fdisk:
             if l.find("Units") > -1:
                 self.sector = int(p[-2])
             if l.find(self.name) > -1:
-                self.partitions.append(Partition(l, self.sector)
+                self.partitions.append(Partition(l, self.sector))
 
     def mount(self, partname):
         """
