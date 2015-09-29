@@ -16,10 +16,10 @@ class TftpAppend:
     def __init__(self, line="append"):
         self.content = line.strip()
         self.parts = self.content.split()
-        if self.parts[0] is not "append":
+        if (self.parts[0] != "append"):
             return None
         self.values = {}
-        if len(self.parts > 1):
+        if len(self.parts) > 1:
             for vals in self.parts[1:]:
                 key, val = vals.split("=")
                 self.values[key] = val
@@ -60,15 +60,53 @@ class  TftpEntry:
         self.append = None
     
     def add_line(self, line):
-        if 
+        pass
     
 class TftpConfig:
     def __init__(self, fname):
+        labelfound = False
+        self.header = []
+        self.entries = {}
         self.lines = read_file(fname)
-        
+        temp_entry = None
+        for line in self.lines:
+
+            if line.lower().startswith("label"):
+                if labelfound == True:
+                    self.entries[temp_entry.label] = temp_entry
+                labelfound = True
+                lbl = line.split()[1]
+                temp_entry = TftpEntry()
+                temp_entry.label = lbl
+
+            if not labelfound:
+                self.header.append(line)
+            else:
+                if line.lower().startswith("label"):
+                    pass
+                else:
+                    if line.strip().lower().startswith("menu label"):
+                        temp_entry.menulabel = line.split()[2]
+                    elif line.strip().lower().startswith("menu"):
+                        temp_entry.menu = line.split()[1]
+                    if line.strip().lower().startswith("kernel"):
+                        temp_entry.kernel = line.split()[1]
+                    if line.strip().lower().startswith("append"):
+                        temp_entry.append = TftpAppend(line = line.strip())
+
+        for k,v in self.entries.items():
+            print k, v.append.append_str()
 
 class Tftpboot:
     def __init__(self, basedir="/tftpboot"):
         self.basedir = basedir
-        self.config_files = glob.glob("%s/pxelinux.cfg/*")
+        self.config_files = glob.glob("%s/pxelinux.cfg/*" % self.basedir)
+        self.configs = {}
+        for f in self.config_files:
+            self.configs[f] = TftpConfig(f)
+
+
+
+if __name__ == "__main__":
+    tft = Tftpboot()
 
