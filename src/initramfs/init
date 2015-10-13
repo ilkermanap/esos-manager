@@ -1,9 +1,6 @@
 #! /bin/busybox sh 
 #
 # $Id: initramfs_init 722 2014-11-14 19:11:49Z msmith626@gmail.com $
-# 
-# Modified by ilkermanap@gmail.com to create a network bootable image
-#
 
 rescue_shell() {
 	echo "Something bad happened; attempting to drop into a shell..."
@@ -14,8 +11,11 @@ rescue_shell() {
 # Install BusyBox
 /bin/busybox --install -s
 
+ 
 # Hide kernel console messages
 dmesg -n 1
+
+
 
 # Some devices are delayed
 echo "Waiting for devices to settle..."
@@ -26,40 +26,68 @@ mount -t proc none /proc || rescue_shell
 mount -t sysfs none /sys || rescue_shell
 mdev -s || rescue_shell
 
+
+
+# FIXME: send vmcore with wget post 
+# Catch if /proc/vmcore exists -- we capture the crash dump and reboot
+#if [ -e /proc/vmcore ]; then
+#	echo "It appears a crash dump kernel is running."
+#	echo "Saving /proc/vmcore to the ESOS log file system..."
+#	logs_fs_dev="$(findfs LABEL=esos_logs)" || \
+#	(echo "Error resolving the logs device node!"; rescue_shell)
+#	mount ${logs_fs_dev} /mnt/tmp || rescue_shell
+#	makedumpfile -E -d 31 /proc/vmcore /mnt/tmp/dumpfile-`date +"%s"` || rescue_shell
+#	umount /mnt/tmp || rescue_shell
+#	reboot -f || rescue_shell
+#fi
+
 # Make sure we have enough physical memory
 if [ `cat /proc/meminfo | grep MemTotal | awk '{print $2}'` -lt 3500000 ]; then
 	echo "ESOS requires at least 3.5 GB of usable RAM!"
 	rescue_shell
 fi
 
+
+# Ilker: No need to find the root device. 
+# It will be downloaded from tftp server
+# Attempt to resolve the FS label here
+#root_fs_dev="$(findfs LABEL=esos_root)" || \
+#(echo "Error resolving the root device node!"; rescue_shell)
+
 # Mount up
-# tmp dir size is important. if the image file is bigger than 
-# 250MB, this should break.
-# FIXME: after creating the root file system image, check if it 
-# is bigger than 250 MB.
 mount -t tmpfs -o size=1536m tmpfs /mnt/root || rescue_shell
 mount -t tmpfs -o size=250m tmpfs /mnt/tmp || rescue_shell
 
 # Download root file system
 echo "Downloading root file system..."
 cd /mnt/tmp
-# sample
-# tftp -g -r /esos/esos-rootimg-r645.img  192.168.1.20
-# directory is with respect to tftp directory.
-
-tftp -g -r xTFTP_ROOTIMAGE_DIR/xROOTIMAGE_FILE  xTFTPSERVER_IP_ADDR
-
+tftp -g -r /$ROOTIMAGE_FILE $TFTPSERVER_IP_ADDR
+FNAME=`echo $ROOTIMAGE_FILE | awk -F"/" '{ print $NF }' ` 
 # Setup the root file system
 echo "Initializing root file system..."
 cd /mnt/root 
-echo "Unzipping and extracting.."
-gzip -d -c /mnt/tmp/xROOTIMAGE_FILE | cpio -imd
+gzip -d -c /mnt/tmp/$FNAME | cpio -imd
+
+#
+#mount -o ro ${root_fs_dev} /mnt/tmp || rescue_shell
+
+# Setup the root file system
+#echo "Initializing root file system..."
+#cd /mnt/tmp
+#spinner="/-\|"
+#spin_pos=0
+#find . -depth | cpio -pmdv --quiet /mnt/root | while read i; do
+#	printf "\b"${spinner:$spin_pos:1}
+#	spin_pos=$(( ( ${spin_pos} + 1 ) % 4 ))
+#done
+#printf "\b"
+
+
 
 cd /
 mkdir /mnt/root/dev
 mkdir /mnt/root/proc
 mkdir /mnt/root/sys
-
 cp -a /dev/* /mnt/root/dev/
 ln -s busybox /mnt/root/bin/sh
 chroot /mnt/root /bin/sh -c "/bin/busybox --install -s"

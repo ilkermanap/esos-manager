@@ -1,13 +1,16 @@
 <?php
 
-$client = $_SERVER['REMOTE_ADDR'];
-$mac = popen('arp -a '.$client, 'r').read();
-$fname = "/var/esos/confs/".$mac."-conf.cpio.gz";
-$tempdir = popen
+$mac = $_GET['mac'];
+$file = "/var/esos/confs/".$mac."-conf.cpio.gz";
 
-system("mkdir -p /var/www/html/");
-system("cp ".$fname. "");
+header('Content-Description: File Transfer');
+header('Content-Type: application/octet-stream');
+header('Content-Disposition: attachment; filename="'.basename($file).'"');
+header('Expires: 0');
+header('Cache-Control: must-revalidate');
+header('Pragma: public');
+header('Content-Length: ' . filesize($file));
+readfile($file);
+exit;
 
-
-
-<?
+?>

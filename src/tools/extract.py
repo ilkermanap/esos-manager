@@ -13,9 +13,9 @@ class Cpio:
 
     def create(self, fname, gzip=True):
         if gzip == True:
-            cmd = "cd %s; find . -depth  -print | cpio -ov | gzip -9  > ../%s.gz"  % (self.temp, fname)
+            cmd = "cd %s; find .  | cpio -H newc -ov  | gzip -9  > ../%s.gz"  % (self.temp, fname)
         else:
-            cmd = "cd %s; find . -depth  -print | cpio -ov  > ../%s"  % (self.temp, fname)
+            cmd = "cd %s; find .  | cpio -H newc -ov  > ../%s"  % (self.temp, fname)
         print cmd
         os.system(cmd)
         pass

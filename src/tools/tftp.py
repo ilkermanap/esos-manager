@@ -63,39 +63,43 @@ class  TftpEntry:
         pass
     
 class TftpConfig:
-    def __init__(self, fname):
+    def __init__(self, fname=None):
         labelfound = False
         self.header = []
         self.entries = {}
-        self.lines = read_file(fname)
-        temp_entry = None
-        for line in self.lines:
-
-            if line.lower().startswith("label"):
-                if labelfound == True:
-                    self.entries[temp_entry.label] = temp_entry
-                labelfound = True
-                lbl = line.split()[1]
-                temp_entry = TftpEntry()
-                temp_entry.label = lbl
-
-            if not labelfound:
-                self.header.append(line)
-            else:
+        if fname is None:
+            self.header = ['DEFAULT menu.c32','prompt 0','timeout 5']
+        else:
+            print "ttfpconfig icinde ", fname
+            self.lines = read_file(fname)
+            temp_entry = None
+            for line in self.lines:
                 if line.lower().startswith("label"):
-                    pass
-                else:
-                    if line.strip().lower().startswith("menu label"):
-                        temp_entry.menulabel = line.split()[2]
-                    elif line.strip().lower().startswith("menu"):
-                        temp_entry.menu = line.split()[1]
-                    if line.strip().lower().startswith("kernel"):
-                        temp_entry.kernel = line.split()[1]
-                    if line.strip().lower().startswith("append"):
-                        temp_entry.append = TftpAppend(line = line.strip())
+                    if labelfound == True:
+                        self.entries[temp_entry.label] = temp_entry
+                    labelfound = True
+                    lbl = line.split()[1]
+                    temp_entry = TftpEntry()
+                    temp_entry.label = lbl
 
-        for k,v in self.entries.items():
-            print k, v.append.append_str()
+                if not labelfound:
+                    self.header.append(line)
+                else:
+                    if line.lower().startswith("label"):
+                        pass
+                    else:
+                        if line.strip().lower().startswith("menu label"):
+                            temp_entry.menulabel = line.split()[2]
+                        elif line.strip().lower().startswith("menu"):
+                            temp_entry.menu = line.split()[1]
+                        if line.strip().lower().startswith("kernel"):
+                            temp_entry.kernel = line.split()[1]
+                        if line.strip().lower().startswith("append"):
+                            temp_entry.append = TftpAppend(line = line.strip())
+
+    def add_entry(self, new_entry):
+        self.entries[new_entry.label] = new_entry
+
 
 class Tftpboot:
     def __init__(self, basedir="/tftpboot"):

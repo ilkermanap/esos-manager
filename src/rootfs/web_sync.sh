@@ -4,7 +4,7 @@
 # TFTP Server and the root tmpfs filesystem.
 
 
-WEBSERVER=`grep nameserver /etc/resolv.conf | awk '{print $2}' | head -n1` 
+WEBSERVER=`cat /etc/esos-bootserver.conf` 
 CONF_MNT="/mnt/conf"
 CONF_CPIO="/mnt/confcpio"
 SYNC_DIRS="/etc /var/lib" # These are absolute paths (leading '/' required)
@@ -31,6 +31,8 @@ cd ${CONF_CPIO}
 #FIXME get latest from webserver
 #tftp -g -r /esos/conf/${FNAME1} ${TFTPSERVER}
 # extract from cpio archive
+curl http://${WEBSERVER}/esos/sendconf.php?mac=${HWADDR} > ${FNAME1}
+
 cd ${CONF_MNT}
 gzip -d -c ${CONF_CPIO}/${FNAME1} |  cpio -imd
 
